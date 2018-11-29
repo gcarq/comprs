@@ -1,0 +1,33 @@
+[package]
+name = "comprs"
+version = "0.1.0"
+authors = ["michael.egger@tsn.at"]
+
+[dependencies]
+sha2 = "0.8.0"
+bitbit = "0.1.2"
+clap = "2.32.0"
+serde = "1.0.79"
+serde_derive = "1.0.79"
+bincode = "1.0.1"
+log = "0.4.5"
+varuint = "0.5"
+lifeguard = "0.6.0"
+
+[profile.dev]
+opt-level = 0
+debug = true
+rpath = false
+lto = false
+debug-assertions = true
+codegen-units = 16
+# `codegen-units` is ignored when `lto = true`
+
+[profile.release]
+opt-level = 3
+debug = true
+rpath = false
+lto = false
+debug-assertions = false
+codegen-units = 1
+# `codegen-units` is ignored when `lto = true`

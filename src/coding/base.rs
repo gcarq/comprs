@@ -1,0 +1,66 @@
+use coding::{FrequencyTable, Symbol};
+use std::io::Result;
+
+
+pub trait ArithmeticCoderBase {
+
+    fn set_low(&mut self, value: usize);
+    fn set_high(&mut self, value: usize);
+
+    fn low(&self) -> usize;
+    fn high(&self) -> usize;
+    fn state_mask(&self) -> usize;
+    fn minimum_range(&self) -> usize;
+    fn quarter_range(&self) -> usize;
+    fn half_range(&self) -> usize;
+    fn full_range(&self) -> usize;
+    fn maximum_total(&self) -> usize;
+
+    fn shift(&mut self) -> Result<()>;
+    fn underflow(&mut self);
+
+    fn update<T: FrequencyTable>(&mut self, freqtable: &mut T, symbol: Symbol) -> Result<()> {
+        let (low, high) = (self.low(), self.high());
+        debug_assert!(low < high);
+
+        //FIXME: asserts fail somehow
+        //debug_assert!(low & state_mask != low);
+        //debug_assert!(high & state_mask != high);
+
+        let range = high - low + 1;
+        debug_assert!(self.minimum_range() <= range);
+        debug_assert!(range <= self.full_range());
+
+        let symlow = freqtable.get_low(symbol);
+        let symhigh = freqtable.get_high(symbol);
+        let total = freqtable.total();
+        debug_assert!(symlow != symhigh);
+        debug_assert!(total < self.maximum_total());
+
+        let (mut low, mut high) =
+            (low + symlow * range / total, low + symhigh * range / total - 1);
+
+        // While low and high have the same top bit value, shift them out
+        let half_range = self.half_range();
+        let state_mask = self.state_mask();
+        while ((low ^ high) & half_range) == 0 {
+            // shift() needs an updated low value
+            self.set_low(low);
+            self.shift()?;
+            low = (low << 1) & state_mask;
+            high = ((high << 1) & state_mask) | 1;
+        }
+        // Now low's top bit must be 0 and high's top bit must be 1
+
+        // While low's top two bits are 01 and high's are 10, delete the second highest bit of both
+        let quarter_range = self.quarter_range();
+        while (low & !high & quarter_range) != 0 {
+            self.underflow();
+            low = (low << 1) ^ half_range;
+            high = ((high ^ half_range) << 1) | half_range | 1;
+        }
+        self.set_low(low);
+        self.set_high(high);
+        Ok(())
+    }
+}
