@@ -6,8 +6,6 @@ mod bwt;
 mod mtf;
 mod rle;
 mod startransform;
-mod custom;
-
 
 #[derive(Serialize, Deserialize)]
 pub enum Transform {
@@ -15,7 +13,6 @@ pub enum Transform {
     MTF,
     RLE,
     ST,
-    CUSTOM,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -36,7 +33,6 @@ impl TData {
         debug!("DEBUG: File entropy before preprocessing: {:.2}", calc_entropy(&buffer));
 
         let transforms = vec![
-            //Transform::CUSTOM,
             //Transform::ST, FIXME: currently broken
             Transform::BWT,
             Transform::MTF,
@@ -48,7 +44,6 @@ impl TData {
                 Transform::BWT => bwt::apply(&buffer),
                 Transform::MTF => mtf::apply(&buffer),
                 Transform::RLE => rle::apply(&buffer)?,
-                Transform::CUSTOM => custom::apply(&buffer),
             };
         }
 
@@ -66,7 +61,6 @@ impl TData {
                 Transform::BWT => bwt::reduce(&buffer),
                 Transform::MTF => mtf::reduce(&buffer),
                 Transform::RLE => rle::reduce(&buffer),
-                Transform::CUSTOM => custom::reduce(&buffer),
                 _ => unimplemented!("notimplemented"),
             };
         }
