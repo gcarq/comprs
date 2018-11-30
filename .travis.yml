@@ -19,13 +19,6 @@ before_cache:
 
 rust:
   - nightly
-  - beta
-  - stable
-
-matrix:
-  allow_failures:
-    - rust: nightly
-  fast_finish: true
 
 # load travis-cargo
 before_script:
