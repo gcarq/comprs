@@ -16,4 +16,4 @@ enwik8
 *.exe
 
 perf.*
-*.sh
+/*.sh
