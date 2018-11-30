@@ -1,5 +1,7 @@
 # comprs
 
+[![Build Status](https://travis-ci.org/gcarq/comprs.svg?branch=master)](https://travis-ci.org/gcarq/comprs)
+
 Experimental sandbox for compression algorithms in Rust.
 PPM and Arithmetic coder are inspired by: [Reference-arithmetic-coding](https://github.com/nayuki/Reference-arithmetic-coding).
 
