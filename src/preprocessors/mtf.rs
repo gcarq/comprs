@@ -5,7 +5,7 @@ pub fn apply(data: &[u8]) -> Vec<u8> {
     // Create alphabet vector
     let mut alphabet: Vec<u8> = (0..=255).collect();
 
-    // Remove byte from alphabet and write it to the output buffer
+    // Iterates over data and encodes each byte with the current alphabet
     data.into_iter().map(|b|encode(*b, &mut alphabet)).collect()
 }
 

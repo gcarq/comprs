@@ -1,28 +1,4 @@
-use sha2::{Digest, Sha256};
 use std::fs::Metadata;
-use std::io::{Error, Read};
-
-const BUFFER_SIZE: usize = 1024;
-
-/// Compute digest value for given `Reader` and print it.
-pub fn sha256sum<R: Read>(reader: &mut R) -> Result<String, Error> {
-    let mut sh = Sha256::default();
-    let mut buffer = [0u8; BUFFER_SIZE];
-    loop {
-        let n = reader.read(&mut buffer)?;
-        sh.input(&buffer[..n]);
-        if n == 0 || n < BUFFER_SIZE {
-            break;
-        }
-    }
-
-    Ok(
-        sh.result().iter()
-        .map(|b| format!("{:02x}", b))
-        .collect::<Vec<String>>()
-        .join("")
-    )
-}
 
 pub fn calc_entropy(data: &[u8]) -> f64 {
     // Calculate frequency of each byte in vector

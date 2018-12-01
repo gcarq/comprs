@@ -6,16 +6,17 @@ extern crate bitbit;
 #[macro_use] extern crate log;
 extern crate serde;
 #[macro_use] extern crate serde_derive;
-extern crate sha2;
 extern crate test;
 extern crate varuint;
+extern crate adler32;
 
 
 use clap::{App, Arg};
+use adler32::adler32;
 use coding::Symbol;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Read, Result, Seek, SeekFrom, Write};
-use utils::{print_statistics, sha256sum};
+use utils::print_statistics;
 
 mod coding;
 mod ppm;
@@ -88,15 +89,15 @@ fn main() -> Result<()> {
 
             decompress_file(&mut tmp_reader, &mut tmp_writer, order, symbol_limit, escape_symbol)?;
 
-            // Calculate hashsums
-            let input_sha256sum = sha256sum(&mut File::open(&input_file)?)?;
-            let restored_sha256sum = sha256sum(&mut File::open(&temp_file)?)?;
+            // Calculate checksums
+            let input_checksum = adler32(&mut File::open(&input_file)?)?;
+            let restored_checksum = adler32(&mut File::open(&temp_file)?)?;
 
             // Sanity check
-            if input_sha256sum == restored_sha256sum {
-                println!("sha256sum is OK - {}", restored_sha256sum);
+            if input_checksum == restored_checksum {
+                println!("checksum is OK - {}", restored_checksum);
             } else {
-                panic!(format!("sha256sum does not match!\nSee: {} for debugging purposes", temp_file));
+                panic!(format!("FATAL: checksum does not match! - {}", restored_checksum));
             }
         },
         "d" | "decompress" => {

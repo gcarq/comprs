@@ -47,8 +47,6 @@ $ cargo build --release
 
 ```
 $ wget -O world95.txt https://www.gutenberg.org/files/27560/27560.txt
-$ sha256sum world95.txt
-d4ed053291f82fd7d770c4f2e9194c82a2393d8cddf34f80ed593cfa4cbf0e2f  world95.txt
 $ ./target/release/comprs c world95.txt
 Applying preprocessors ...
  -> BWT
@@ -61,5 +59,5 @@ Verifying compressed file ...
 Decoding preprocessors ...
  -> MTF
  -> BWT
-sha256sum is OK - d4ed053291f82fd7d770c4f2e9194c82a2393d8cddf34f80ed593cfa4cbf0e2f
+checksum is OK - 1921997141
 ```
