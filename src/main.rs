@@ -82,16 +82,15 @@ fn main() -> Result<()> {
 
             println!("Verifying compressed file ...");
 
-            //TODO: use tempfs abstraction lib or save in cwd
-            let mut tmp_reader = BufReader::new(File::open(&output_file)?);
-            let temp_file = "/tmp/comprs.tmp";
-            let mut tmp_writer = BufWriter::new(File::create(&temp_file)?);
-
-            decompress_file(&mut tmp_reader, &mut tmp_writer, order, symbol_limit, escape_symbol)?;
+            let mut verify_buffer = Cursor::new(Vec::new());
+            decompress_file(&mut BufReader::new(File::open(&output_file)?),
+                            &mut verify_buffer,
+                            order, symbol_limit, escape_symbol)?;
 
             // Calculate checksums
             let input_checksum = adler32(&mut File::open(&input_file)?)?;
-            let restored_checksum = adler32(&mut File::open(&temp_file)?)?;
+            verify_buffer.seek(SeekFrom::Start(0))?;
+            let restored_checksum = adler32(verify_buffer)?;
 
             // Sanity check
             if input_checksum == restored_checksum {
