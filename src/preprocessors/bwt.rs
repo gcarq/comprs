@@ -3,6 +3,7 @@ use std::ops::Index;
 
 use bincode;
 use rayon::prelude::ParallelSliceMut;
+use rayon::iter::{ParallelIterator, IntoParallelRefIterator, IndexedParallelIterator};
 
 const CHUNK_SIZE: u32 = 1024 * 1024;
 
@@ -72,8 +73,7 @@ struct BWTChunk {
 }
 
 impl BWTChunk {
-    pub fn encode(input: &[u8]) -> Self {
-        let data = input;
+    pub fn encode(data: &[u8]) -> Self {
         let len = data.len();
 
         // Create permutations table
@@ -85,7 +85,7 @@ impl BWTChunk {
         // Create encoded data by using the last element in each row
         let index: u32 = permutations.iter()
             .position(|p| p.index == 0).unwrap() as u32;
-        let data: Vec<u8> = permutations.iter()
+        let data: Vec<u8> = permutations.par_iter()
             .map(|m| m[len-1]).collect();
 
         BWTChunk {data, index}
@@ -95,7 +95,7 @@ impl BWTChunk {
         let len = self.data.len();
 
         // Save all characters with along with position
-        let mut table: Vec<BWTReconstructData> = self.data.iter().enumerate()
+        let mut table: Vec<BWTReconstructData> = self.data.par_iter().enumerate()
             .map(|(i, c)| BWTReconstructData {position: i as u32, char: *c})
             .collect();
 
