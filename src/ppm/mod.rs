@@ -24,7 +24,7 @@ pub fn compress<R: Read, W: Write>(reader: &mut R, writer: &mut W, order: isize,
 
     let mut encoder = ArithmeticEncoder::new(BitWriter::new(writer), 32);
     let mut model = PPMModel::new(order as u8, symbol_limit, escape_symbol);
-    let mut history: Vec<u16> = Vec::with_capacity(model.order as usize + 1);
+    let mut history: Vec<Symbol> = Vec::with_capacity(model.order as usize + 1);
 
 
     let mut buffer = [0u8; 1];
@@ -40,7 +40,7 @@ pub fn compress<R: Read, W: Write>(reader: &mut R, writer: &mut W, order: isize,
     }
 
     // Encode EOF
-    encode_symbol(&mut model, &history, 256, &mut encoder)?;
+    encode_symbol(&mut model, &history, EOF, &mut encoder)?;
     encoder.finish()
 }
 
@@ -129,7 +129,7 @@ fn decode_symbol<'a, R: Read>(model: &'a mut PPMModel, history: &[Symbol], decod
             None => { },
             Some(ref mut ctx) => {
                 let symbol = decoder.read(&mut ctx.frequencies)?;
-                if symbol < 256 {
+                if symbol < EOF {
                     return Ok(symbol);
                 }
                 // Else we read the context escape symbol, so continue decrementing the order
