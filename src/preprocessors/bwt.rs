@@ -80,7 +80,7 @@ impl BWTChunk {
         let mut permutations: Vec<Permutation> = (0..len)
             .map(|i| Permutation::new(data, i as u32)).collect();
 
-        permutations.par_sort_unstable();
+        permutations.par_sort();
 
         // Create encoded data by using the last element in each row
         let index: u32 = permutations.iter()
