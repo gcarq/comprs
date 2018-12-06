@@ -12,6 +12,7 @@ bincode = "1.0.1"
 log = "0.4.5"
 varuint = "0.5"
 adler32 = "1.0.3"
+rayon = "1.0.3"
 
 [profile.dev]
 opt-level = 0

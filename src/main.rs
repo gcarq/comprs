@@ -9,6 +9,7 @@ extern crate serde;
 extern crate test;
 extern crate varuint;
 extern crate adler32;
+extern crate rayon;
 
 
 use clap::{App, Arg};

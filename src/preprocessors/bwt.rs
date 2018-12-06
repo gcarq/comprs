@@ -1,6 +1,8 @@
-use bincode;
 use std::cmp::Ordering;
 use std::ops::Index;
+
+use bincode;
+use rayon::prelude::ParallelSliceMut;
 
 const CHUNK_SIZE: u32 = 1024 * 1024;
 
@@ -78,7 +80,7 @@ impl BWTChunk {
         let mut permutations: Vec<Permutation> = (0..len)
             .map(|i| Permutation::new(data, i as u32)).collect();
 
-        permutations.sort_unstable();
+        permutations.par_sort_unstable();
 
         // Create encoded data by using the last element in each row
         let index: u32 = permutations.iter()
@@ -97,7 +99,7 @@ impl BWTChunk {
             .map(|(i, c)| BWTReconstructData {position: i as u32, char: *c})
             .collect();
 
-        table.sort();
+        table.par_sort();
 
         // Build decoded content
         let mut decoded = Vec::with_capacity(len);
