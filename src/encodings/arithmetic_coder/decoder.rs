@@ -1,7 +1,7 @@
 use bitbit::{BitReader, MSB};
-use coding::base::ArithmeticCoderBase;
-use coding::FrequencyTable;
-use coding::Symbol;
+use encodings::arithmetic_coder::base::ArithmeticCoderBase;
+use encodings::arithmetic_coder::FrequencyTable;
+use encodings::arithmetic_coder::Symbol;
 use std::io::{Read, Result};
 
 

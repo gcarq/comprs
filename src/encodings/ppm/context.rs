@@ -1,4 +1,4 @@
-use coding::{FrequencyTable, SimpleFrequencyTable, Symbol};
+use encodings::arithmetic_coder::{FrequencyTable, SimpleFrequencyTable, Symbol};
 use std::collections::BTreeMap;
 
 pub struct Context {

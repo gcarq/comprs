@@ -2,10 +2,12 @@ use bincode;
 use std::io::{BufReader, Read, Result};
 use utils::calc_entropy;
 
-mod bwt;
-mod mtf;
-mod rle;
-mod startransform;
+pub mod ppm;
+pub mod bwt;
+pub mod mtf;
+pub mod rle;
+pub mod startransform;
+pub mod arithmetic_coder;
 
 #[derive(Serialize, Deserialize)]
 pub enum Transform {
@@ -13,6 +15,7 @@ pub enum Transform {
     MTF,
     RLE,
     ST,
+    PPM,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -36,6 +39,7 @@ impl TData {
             //Transform::ST, FIXME: currently broken
             Transform::BWT,
             Transform::MTF,
+            Transform::PPM,
         ];
 
         for transform in &transforms {
@@ -44,6 +48,7 @@ impl TData {
                 Transform::BWT => bwt::apply(&buffer),
                 Transform::MTF => mtf::apply(&buffer),
                 Transform::RLE => rle::apply(&buffer)?,
+                Transform::PPM => ppm::apply(&buffer)?,
             };
         }
 
@@ -61,6 +66,7 @@ impl TData {
                 Transform::BWT => bwt::reduce(&buffer),
                 Transform::MTF => mtf::reduce(&buffer),
                 Transform::RLE => rle::reduce(&buffer),
+                Transform::PPM => ppm::reduce(&buffer)?,
                 _ => unimplemented!("notimplemented"),
             };
         }
@@ -74,10 +80,7 @@ pub fn encode_pipeline<R: Read>(reader: R) -> Result<Vec<u8>> {
 }
 
 pub fn decode_pipeline<R: Read>(reader: R) -> Result<Vec<u8>> {
-    let mut buffer = Vec::new();
-    BufReader::new(reader).read_to_end(&mut buffer)?;
-
-    let data = bincode::deserialize::<TData>(&buffer)
+    let data = bincode::deserialize_from::<R, TData>(reader)
         .expect("unable to deserialize data");
     data.decode()
 }

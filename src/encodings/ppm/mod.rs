@@ -1,36 +1,32 @@
 use bitbit::{BitReader, BitWriter};
-use coding::{FrequencyTable, Symbol};
-use coding::decoder::ArithmeticDecoder;
-use coding::encoder::ArithmeticEncoder;
-use ppm::context::Context;
-use ppm::model::PPMModel;
+use encodings::arithmetic_coder::{FrequencyTable, Symbol};
+use encodings::arithmetic_coder::decoder::ArithmeticDecoder;
+use encodings::arithmetic_coder::encoder::ArithmeticEncoder;
+use encodings::ppm::context::Context;
+use encodings::ppm::model::PPMModel;
 use std::io::{Read, Result, Write};
 
 pub mod context;
 pub mod model;
 
+// TODO: create struct to hold all possible encoding parameters
 const EOF: Symbol = 256;
+const ORDER: u8 = 2;
+const SYMBOL_LIMIT: u16 = 257;
+const ESCAPE_SYMBOL: Symbol = 256;
+const NUM_BITS: usize = 32;
+
 
 /// Compress content provided by reader and write compressed data to writer.
-pub fn compress<R: Read, W: Write>(reader: &mut R, writer: &mut W, order: isize, symbol_limit: u16, escape_symbol: Symbol) -> Result<()> {
-    if order == -1 {
-        debug!("DEBUG: order 0 requested. bypassing compression");
-        let mut buffer = [0u8; 4096];
-        while reader.read(&mut buffer)? > 0 {
-            writer.write_all(&buffer)?;
-        }
-        return writer.flush();
-    }
-
-    let mut encoder = ArithmeticEncoder::new(BitWriter::new(writer), 32);
-    let mut model = PPMModel::new(order as u8, symbol_limit, escape_symbol);
+pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
+    let mut encoder = ArithmeticEncoder::new(
+        BitWriter::new(Vec::new()),
+        NUM_BITS);
+    let mut model = PPMModel::new(ORDER as u8, SYMBOL_LIMIT, ESCAPE_SYMBOL);
     let mut history: Vec<Symbol> = Vec::with_capacity(model.order as usize + 1);
 
-
-    let mut buffer = [0u8; 1];
-    // Read bytes to buffer from given reader
-    while reader.read(&mut buffer)? > 0 {
-        let symbol = Symbol::from(buffer[0]);
+    for byte in data {
+        let symbol = u16::from(*byte);
         encode_symbol(&mut model, &history, symbol, &mut encoder)?;
         model.increment_contexts(&history, symbol);
 
@@ -41,39 +37,31 @@ pub fn compress<R: Read, W: Write>(reader: &mut R, writer: &mut W, order: isize,
 
     // Encode EOF
     encode_symbol(&mut model, &history, EOF, &mut encoder)?;
-    encoder.finish()
+    encoder.finish()?;
+    Ok(encoder.inner_ref().clone())
 }
 
 /// Decompress content provided by reader and write restored data to writer.
-pub fn decompress<R: Read, W: Write>(reader: &mut R, writer: &mut W, order: isize, symbol_limit: u16, escape_symbol: Symbol) -> Result<()> {
-
-    if order == -1 {
-        debug!("DEBUG: order 0 requested. bypassing compression");
-        let mut buffer = [0u8; 4096];
-        while reader.read(&mut buffer)? > 0 {
-            writer.write_all(&buffer)?;
-        }
-        return writer.flush();
-    }
-
-    let mut decoder = ArithmeticDecoder::new(BitReader::new(reader), 32)?;
-    let mut model = PPMModel::new(order as u8, symbol_limit, escape_symbol);
+pub fn reduce(data: &[u8]) -> Result<Vec<u8>> {
+    let mut decoder = ArithmeticDecoder::new(BitReader::new(data), NUM_BITS)?;
+    let mut model = PPMModel::new(ORDER as u8, SYMBOL_LIMIT, ESCAPE_SYMBOL);
     let mut history: Vec<u16> = Vec::with_capacity(model.order as usize + 1);
 
+    let mut buffer = Vec::new();
     loop {
         let symbol = decode_symbol(&mut model, &history, &mut decoder)?;
         // Check if EOF symbol has occurred
         if symbol == EOF {
             break
         }
-        writer.write_all(&[symbol as u8])?;
+        buffer.write_all(&[symbol as u8])?;
         model.increment_contexts(&history, symbol);
 
         if model.order >= 1 {
             mutate_history(symbol, model.order, &mut history);
         }
     }
-    writer.flush()
+    Ok(buffer)
 }
 
 
@@ -142,12 +130,12 @@ fn decode_symbol<'a, R: Read>(model: &'a mut PPMModel, history: &[Symbol], decod
 
 #[cfg(test)]
 mod tests {
-    use std::io::{Cursor, Result, Seek, SeekFrom};
-    use super::{compress, decompress};
+    use std::io::Result;
+    use super::{apply, reduce};
 
     #[test]
     fn test_compression() -> Result<()> {
-        let test_data: Vec<u8> = String::from("\
+        let original: Vec<u8> = String::from("\
             Lorem Ipsum is simply dummy text of the printing and typesetting industry.\
             Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\
             when an unknown printer took a galley of type and scrambled it to make a type \
@@ -157,17 +145,10 @@ mod tests {
             and more recently with desktop publishing software like Aldus PageMaker including \
             versions of Lorem Ipsum.").into_bytes();
 
-        let mut original = Cursor::new(test_data);
-        let mut intermediate = Cursor::new(Vec::new());
-        let mut restored = Cursor::new(Vec::new());
+        let intermediate = apply(&original)?;
+        let restored = reduce(&intermediate)?;
 
-        compress(&mut original, &mut intermediate, 3, 257, 256)?;
-        intermediate.seek(SeekFrom::Start(0))?;
-
-        decompress(&mut intermediate, &mut restored, 3, 257, 256)?;
-        restored.seek(SeekFrom::Start(0))?;
-
-        assert_eq!(original.into_inner(), restored.into_inner());
+        assert_eq!(original, restored);
         Ok(())
     }
 }

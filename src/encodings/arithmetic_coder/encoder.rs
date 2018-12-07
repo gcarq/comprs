@@ -1,7 +1,7 @@
 use bitbit::BitWriter;
-use coding::base::ArithmeticCoderBase;
-use coding::FrequencyTable;
-use coding::Symbol;
+use encodings::arithmetic_coder::base::ArithmeticCoderBase;
+use encodings::arithmetic_coder::FrequencyTable;
+use encodings::arithmetic_coder::Symbol;
 use std::io::{Result, Write};
 
 
@@ -65,6 +65,11 @@ impl<W: Write> ArithmeticEncoder<W> {
     pub fn finish(&mut self) -> Result<()> {
         self.writer.write_bit(true)?;
         self.writer.write_byte(0)
+    }
+
+    /// Get reference of the inner writer
+    pub fn inner_ref(&mut self) -> &W {
+        self.writer.get_ref()
     }
 }
 

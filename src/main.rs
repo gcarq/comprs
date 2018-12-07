@@ -14,15 +14,12 @@ extern crate rayon;
 
 use clap::{App, Arg};
 use adler32::adler32;
-use coding::Symbol;
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Cursor, Read, Result, Seek, SeekFrom, Write};
+use std::io::{BufReader, BufWriter, Cursor, Read, Result, Write};
 use utils::print_statistics;
 
-mod coding;
-mod ppm;
 mod utils;
-mod preprocessors;
+mod encodings;
 
 
 fn main() -> Result<()> {
@@ -55,10 +52,6 @@ fn main() -> Result<()> {
         .get_matches();
 
     let input_file = String::from(matches.value_of("file").unwrap());
-    // TODO: remove -1 hack used for no-compression.
-    let order: isize = matches.value_of("o").unwrap().parse::<usize>().unwrap() as isize - 1;
-    let symbol_limit: u16 = 257;
-    let escape_symbol: Symbol = 256;
     let mut verify = true;
     if matches.is_present("no-verify") {
         verify = false;
@@ -71,7 +64,7 @@ fn main() -> Result<()> {
             debug!("DEBUG: Saving output to: {}", &output_file);
             let mut writer = BufWriter::new(File::create(&output_file)?);
 
-            compress_file(&mut reader, &mut writer, order, symbol_limit, escape_symbol)?;
+            writer.write_all(&compress_file(&mut reader)?)?;
 
             print_statistics(
                 &File::open(&input_file)?.metadata()?,
@@ -83,15 +76,11 @@ fn main() -> Result<()> {
 
             println!("Verifying compressed file ...");
 
-            let mut verify_buffer = Cursor::new(Vec::new());
-            decompress_file(&mut BufReader::new(File::open(&output_file)?),
-                            &mut verify_buffer,
-                            order, symbol_limit, escape_symbol)?;
+            let mut restored = decompress_file(&mut BufReader::new(File::open(&output_file)?))?;
 
             // Calculate checksums
             let input_checksum = adler32(&mut File::open(&input_file)?)?;
-            verify_buffer.seek(SeekFrom::Start(0))?;
-            let restored_checksum = adler32(verify_buffer)?;
+            let restored_checksum = adler32(restored.as_slice())?;
 
             // Sanity check
             if input_checksum == restored_checksum {
@@ -104,33 +93,23 @@ fn main() -> Result<()> {
             let output_file = input_file.clone().replace(".comprs", ".restored");
             let mut reader = BufReader::new(File::open(input_file)?);
             let mut writer = BufWriter::new(File::create(&output_file)?);
-            decompress_file(&mut reader, &mut writer, order, symbol_limit, escape_symbol)?;
+            writer.write_all(&decompress_file(&mut reader)?)?;
         },
         _ => unreachable!(),
     }
     Ok(())
 }
 
-fn compress_file<R: Read, W: Write>(reader: &mut R, writer: &mut W, order: isize, symbol_limit: u16, escape_symbol: Symbol) -> Result<()> {
-    println!("Applying preprocessors ...");
-    let mut cursor = Cursor::new(preprocessors::encode_pipeline(reader)?);
-
+fn compress_file<R: Read>(reader: R) -> Result<Vec<u8>> {
     println!("Compressing file ...");
-    ppm::compress(&mut cursor, writer, order, symbol_limit, escape_symbol)?;
-    writer.flush()
+    let cursor = Cursor::new(encodings::encode_pipeline(reader)?);
+    Ok(cursor.into_inner())
 }
 
 
-fn decompress_file<R: Read, W: Write>(reader: &mut R, writer: &mut W, order: isize, symbol_limit: u16, escape_symbol: Symbol) -> Result<()> {
-    // Create in-memory writer to be used to reduce pre-processors afterwards
-    let mut cursor = Cursor::new(Vec::new());
-    ppm::decompress(reader, &mut cursor, order, symbol_limit, escape_symbol)?;
-    cursor.seek(SeekFrom::Start(0))?;
-
-    println!("Decoding preprocessors ...");
-    let data = preprocessors::decode_pipeline(cursor)?;
-    writer.write_all(&data)?;
-    writer.flush()
+fn decompress_file<R: Read>(reader: R) -> Result<Vec<u8>> {
+    println!("Reverting encodings ...");
+    encodings::decode_pipeline(reader)
 }
 
 
@@ -176,16 +155,10 @@ mod tests {
             therefore always free from repetition, injected humour, or non-characteristic words etc."
         ).into_bytes();
 
-        let mut reader = Cursor::new(&test_data);
-        let mut cursor = Cursor::new(Vec::new());
-        let mut writer = Cursor::new(Vec::new());
+        let compressed = compress_file(test_data.as_slice())?;
+        let restored = decompress_file(compressed.as_slice())?;
 
-        compress_file(&mut reader, &mut cursor, 1, 257, 256)?;
-        cursor.seek(SeekFrom::Start(0))?;
-        decompress_file(&mut cursor, &mut writer, 1, 257, 256)?;
-        let result = writer.into_inner();
-
-        assert_eq!(result, test_data);
+        assert_eq!(restored, test_data);
         Ok(())
     }
 
@@ -226,9 +199,9 @@ mod tests {
             therefore always free from repetition, injected humour, or non-characteristic words etc.";
         b.iter(|| {
             let mut reader = BufReader::new(Cursor::new(String::from(test_data).into_bytes()));
-            let mut writer = BufWriter::new(Cursor::new(Vec::new()));
+            let mut buffer = Vec::new();
 
-            compress_file(&mut reader, &mut writer, 1, 257, 256).unwrap();
+            buffer.write_all(&compress_file(&mut reader).unwrap()).unwrap();
         });
     }
 }
