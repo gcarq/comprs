@@ -67,7 +67,7 @@ impl TData {
                 Transform::MTF => mtf::reduce(&buffer),
                 Transform::RLE => rle::reduce(&buffer),
                 Transform::PPM => ppm::reduce(&buffer)?,
-                _ => unimplemented!("notimplemented"),
+                _ => unimplemented!("not implemented"),
             };
         }
         Ok(buffer)

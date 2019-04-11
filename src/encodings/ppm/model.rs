@@ -28,8 +28,7 @@ impl PPMModel {
         debug_assert!(symbol < self.symbol_limit);
 
         for order in 0..=hist_len {
-            let mut ctx = &mut self.context;
-            populate_contexts(ctx, &history[hist_len-order..hist_len], symbol, self.escape_symbol, self.symbol_limit);
+            populate_contexts(&mut self.context, &history[hist_len-order..hist_len], symbol, self.escape_symbol, self.symbol_limit);
         }
     }
 }

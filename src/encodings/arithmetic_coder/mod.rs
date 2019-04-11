@@ -68,16 +68,6 @@ impl FrequencyTable for SimpleFrequencyTable {
     fn total(&self) -> usize { self.total }
 }
 
-impl From<Vec<usize>> for SimpleFrequencyTable {
-    fn from(vec: Vec<usize>) -> Self {
-        let total = &vec.iter().sum();
-        SimpleFrequencyTable {
-            frequencies: vec,
-            total: *total,
-        }
-    }
-}
-
 impl fmt::Debug for SimpleFrequencyTable {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("SimpleFrequencyTable")

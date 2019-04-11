@@ -1,9 +1,9 @@
+use bincode;
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::ParallelSliceMut;
 use std::cmp::Ordering;
 use std::ops::Index;
-
-use bincode;
-use rayon::prelude::ParallelSliceMut;
-use rayon::iter::{ParallelIterator, IntoParallelRefIterator, IndexedParallelIterator};
+use rayon::iter::IntoParallelIterator;
 
 const CHUNK_SIZE: u32 = 1024 * 1024;
 
@@ -78,13 +78,14 @@ impl BWTChunk {
 
         // Create permutations table
         let mut permutations: Vec<Permutation> = (0..len)
+            .into_par_iter()
             .map(|i| Permutation::new(data, i as u32)).collect();
 
         permutations.par_sort();
 
         // Create encoded data by using the last element in each row
-        let index: u32 = permutations.iter()
-            .position(|p| p.index == 0).unwrap() as u32;
+        let index: u32 = permutations.par_iter()
+            .position_any(|p| p.index == 0).unwrap() as u32;
         let data: Vec<u8> = permutations.par_iter()
             .map(|m| m[len-1]).collect();
 

@@ -19,11 +19,13 @@ const NUM_BITS: usize = 32;
 
 /// Compress content provided by reader and write compressed data to writer.
 pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
+    println!(" -> PPM");
+
     let mut encoder = ArithmeticEncoder::new(
-        BitWriter::new(Vec::new()),
+        BitWriter::new(Vec::with_capacity(data.len() / 4)),
         NUM_BITS);
     let mut model = PPMModel::new(ORDER as u8, SYMBOL_LIMIT, ESCAPE_SYMBOL);
-    let mut history: Vec<Symbol> = Vec::with_capacity(model.order as usize + 1);
+    let mut history: Vec<Symbol> = Vec::with_capacity(model.order as usize);
 
     for byte in data {
         let symbol = u16::from(*byte);
@@ -43,11 +45,14 @@ pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
 
 /// Decompress content provided by reader and write restored data to writer.
 pub fn reduce(data: &[u8]) -> Result<Vec<u8>> {
+    println!(" -> PPM");
+
     let mut decoder = ArithmeticDecoder::new(BitReader::new(data), NUM_BITS)?;
     let mut model = PPMModel::new(ORDER as u8, SYMBOL_LIMIT, ESCAPE_SYMBOL);
-    let mut history: Vec<u16> = Vec::with_capacity(model.order as usize + 1);
 
-    let mut buffer = Vec::new();
+    let mut history: Vec<u16> = Vec::with_capacity(model.order as usize);
+    let mut buffer = Vec::with_capacity(data.len());
+
     loop {
         let symbol = decode_symbol(&mut model, &history, &mut decoder)?;
         // Check if EOF symbol has occurred

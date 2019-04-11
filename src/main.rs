@@ -25,7 +25,7 @@ mod encodings;
 fn main() -> Result<()> {
     let matches = App::new("comprs")
         .version(crate_version!())
-        .about("Experimental sandbox for compression algorithms in Rust")
+        .about("Experimental playground for compression algorithms in Rust")
         .arg(Arg::with_name("mode")
             .help("mode")
             .required(true)
@@ -108,7 +108,7 @@ fn compress_file<R: Read>(reader: R) -> Result<Vec<u8>> {
 
 
 fn decompress_file<R: Read>(reader: R) -> Result<Vec<u8>> {
-    println!("Reverting encodings ...");
+    println!("Decompressing file ...");
     encodings::decode_pipeline(reader)
 }
 
@@ -198,10 +198,8 @@ mod tests {
             to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is
             therefore always free from repetition, injected humour, or non-characteristic words etc.";
         b.iter(|| {
-            let mut reader = BufReader::new(Cursor::new(String::from(test_data).into_bytes()));
-            let mut buffer = Vec::new();
-
-            buffer.write_all(&compress_file(&mut reader).unwrap()).unwrap();
+            let mut reader = Cursor::new(String::from(test_data).into_bytes());
+            &compress_file(&mut reader).unwrap();
         });
     }
 }
