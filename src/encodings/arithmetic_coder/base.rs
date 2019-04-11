@@ -1,5 +1,5 @@
-use encodings::arithmetic_coder::{FrequencyTable, Symbol};
 use std::io::Result;
+use super::{FrequencyTable, Symbol};
 
 
 pub trait ArithmeticCoderBase {

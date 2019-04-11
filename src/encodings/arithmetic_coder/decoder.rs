@@ -1,8 +1,7 @@
 use bitbit::{BitReader, MSB};
-use encodings::arithmetic_coder::base::ArithmeticCoderBase;
-use encodings::arithmetic_coder::FrequencyTable;
-use encodings::arithmetic_coder::Symbol;
 use std::io::{Read, Result};
+use super::{FrequencyTable, Symbol};
+use super::base::ArithmeticCoderBase;
 
 
 pub struct ArithmeticDecoder<R: Read> {

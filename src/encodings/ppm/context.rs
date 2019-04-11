@@ -1,5 +1,5 @@
-use encodings::arithmetic_coder::{FrequencyTable, SimpleFrequencyTable, Symbol};
 use std::collections::BTreeMap;
+use super::super::arithmetic_coder::{FrequencyTable, SimpleFrequencyTable, Symbol};
 
 pub struct Context {
     pub frequencies: SimpleFrequencyTable,

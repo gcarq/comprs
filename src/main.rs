@@ -1,19 +1,19 @@
 #![feature(test)]
 
+extern crate adler32;
 extern crate bincode;
 extern crate bitbit;
 #[macro_use] extern crate clap;
 #[macro_use] extern crate log;
+extern crate rayon;
 extern crate serde;
 #[macro_use] extern crate serde_derive;
 extern crate test;
 extern crate varuint;
-extern crate adler32;
-extern crate rayon;
 
 
-use clap::{App, Arg};
 use adler32::adler32;
+use clap::{App, Arg};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Read, Result, Write};
 use utils::print_statistics;

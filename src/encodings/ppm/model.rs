@@ -1,5 +1,5 @@
-use encodings::arithmetic_coder::{FlatFrequencyTable, FrequencyTable, Symbol};
-use encodings::ppm::context::Context;
+use super::context::Context;
+use super::super::arithmetic_coder::{FlatFrequencyTable, FrequencyTable, Symbol};
 
 pub struct PPMModel {
     pub context: Context,

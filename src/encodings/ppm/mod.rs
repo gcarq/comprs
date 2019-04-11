@@ -1,10 +1,10 @@
 use bitbit::{BitReader, BitWriter};
-use encodings::arithmetic_coder::{FrequencyTable, Symbol};
-use encodings::arithmetic_coder::decoder::ArithmeticDecoder;
-use encodings::arithmetic_coder::encoder::ArithmeticEncoder;
-use encodings::ppm::context::Context;
-use encodings::ppm::model::PPMModel;
+use self::context::Context;
+use self::model::PPMModel;
 use std::io::{Read, Result, Write};
+use super::arithmetic_coder::{FrequencyTable, Symbol};
+use super::arithmetic_coder::decoder::ArithmeticDecoder;
+use super::arithmetic_coder::encoder::ArithmeticEncoder;
 
 pub mod context;
 pub mod model;
