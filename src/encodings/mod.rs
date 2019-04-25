@@ -1,5 +1,8 @@
-use bincode;
+use std::fmt;
 use std::io::{BufReader, Read, Result};
+
+use bincode;
+
 use utils::calc_entropy;
 
 pub mod ppm;
@@ -16,6 +19,19 @@ pub enum Transform {
     RLE,
     ST,
     PPM,
+}
+
+impl fmt::Display for Transform {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let printable = match *self {
+            Transform::BWT => "BWT",
+            Transform::MTF => "MTF",
+            Transform::RLE => "RLE",
+            Transform::ST => "ST",
+            Transform::PPM => "PPM",
+        };
+        write!(f, "{}", printable)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -43,6 +59,7 @@ impl TData {
         ];
 
         for transform in &transforms {
+            println!("  -> {} ", transform);
             buffer = match transform {
                 Transform::ST => startransform::apply(&buffer),
                 Transform::BWT => bwt::apply(&buffer),
@@ -62,6 +79,7 @@ impl TData {
         let mut buffer = self.buffer;
 
         for transform in self.transforms.iter().rev() {
+            println!("  -> {} ", transform);
             buffer = match transform {
                 Transform::BWT => bwt::reduce(&buffer),
                 Transform::MTF => mtf::reduce(&buffer),

@@ -1,8 +1,9 @@
-use bitbit::BitWriter;
 use std::io::{Result, Write};
+
+use bitbit::BitWriter;
+
 use super::{FrequencyTable, Symbol};
 use super::base::ArithmeticCoderBase;
-
 
 pub struct ArithmeticEncoder<W: Write> {
     writer: BitWriter<W>,

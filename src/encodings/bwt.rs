@@ -1,19 +1,17 @@
-use bincode;
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
-use rayon::prelude::ParallelSliceMut;
 use std::cmp::Ordering;
 use std::ops::Index;
-use rayon::iter::IntoParallelIterator;
+
+use bincode;
+use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::ParallelSliceMut;
 
 const CHUNK_SIZE: u32 = 1024 * 1024;
 
 
 pub fn apply(data: &[u8]) -> Vec<u8> {
-    println!(" -> BWT");
-
     // Create chunks and encode them
     let chunks: Vec<BWTChunk> = data.chunks(CHUNK_SIZE as usize)
-        .map(|chunk| BWTChunk::encode(chunk))
+        .map(BWTChunk::encode)
         .collect();
     debug!("DEBUG:BWT: split up into {} chunks", chunks.len());
 
@@ -23,15 +21,13 @@ pub fn apply(data: &[u8]) -> Vec<u8> {
 }
 
 pub fn reduce(data: &[u8]) -> Vec<u8> {
-    println!(" -> BWT");
-
     // Create chunks and encode them
     let data: BWTData = bincode::deserialize(data)
         .expect("unable to deserialize data");
     debug!("DEBUG:BWT: got {} chunks", data.chunks.len());
 
     data.chunks.into_iter()
-        .map(|c|c.decode())
+        .map(BWTChunk::decode)
         .flatten()
         .collect()
 }

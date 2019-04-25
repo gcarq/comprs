@@ -12,10 +12,13 @@ extern crate test;
 extern crate varuint;
 
 
-use adler32::adler32;
-use clap::{App, Arg};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor, Read, Result, Write};
+use std::time::Instant;
+
+use adler32::adler32;
+use clap::{App, Arg};
+
 use utils::print_statistics;
 
 mod utils;
@@ -76,7 +79,7 @@ fn main() -> Result<()> {
 
             println!("Verifying compressed file ...");
 
-            let mut restored = decompress_file(&mut BufReader::new(File::open(&output_file)?))?;
+            let restored = decompress_file(&mut BufReader::new(File::open(&output_file)?))?;
 
             // Calculate checksums
             let input_checksum = adler32(&mut File::open(&input_file)?)?;
@@ -102,21 +105,29 @@ fn main() -> Result<()> {
 
 fn compress_file<R: Read>(reader: R) -> Result<Vec<u8>> {
     println!("Compressing file ...");
+    let now = Instant::now();
     let cursor = Cursor::new(encodings::encode_pipeline(reader)?);
+    let elapsed = now.elapsed();
+    println!("elapsed time: {}.{} seconds", elapsed.as_secs(), elapsed.subsec_millis());
     Ok(cursor.into_inner())
 }
 
 
 fn decompress_file<R: Read>(reader: R) -> Result<Vec<u8>> {
     println!("Decompressing file ...");
-    encodings::decode_pipeline(reader)
+    let now = Instant::now();
+    let result = encodings::decode_pipeline(reader);
+    let elapsed = now.elapsed();
+    println!("elapsed time: {}.{} seconds", elapsed.as_secs(), elapsed.subsec_millis());
+    result
 }
 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test::Bencher;
+
+    use super::*;
 
     #[test]
     fn test_compression() -> Result<()> {

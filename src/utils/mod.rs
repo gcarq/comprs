@@ -1,26 +1,19 @@
+use std::collections::HashMap;
 use std::fs::Metadata;
 
+/// Calculates shannon entropy for the given slice
 pub fn calc_entropy(data: &[u8]) -> f64 {
-    // Calculate frequency of each byte in vector
-    let flen = data.len() as f64;
-    let mut freqlist = Vec::with_capacity(256);
-    for symbol in 0..255 {
-        let mut ctr = 0;
-        for byte in data {
-            if *byte == symbol {
-                ctr += 1;
-            }
-        }
-        freqlist.push(f64::from(ctr) / flen);
+    let mut occurences = HashMap::new();
+    for byte in data {
+        *occurences.entry(byte).or_insert(0) += 1;
     }
 
-    let mut entropy = 0.0;
-    // Calculate shannon entropy
-    for freq in freqlist {
-        if freq > 0.0 {
-            entropy += freq * freq.log2();
-        }
-    }
+    let flen = data.len() as f64;
+    let entropy: f64 = occurences.values()
+        .map(|o| f64::from(*o) / flen)
+        .map(|p| p * p.log2())
+        .sum();
+
     -entropy
 }
 
@@ -32,4 +25,16 @@ pub fn print_statistics(input_meta: &Metadata, compressed_meta: &Metadata) {
              input_size / comp_size,
              (1.0 - comp_size / input_size) * 100.0);
     println!("Bits per Byte: {:.4}", comp_size / input_size * 8.0);
+}
+
+#[cfg(test)]
+mod tests {
+    use utils::calc_entropy;
+
+    #[test]
+    fn test_calc_entropy() {
+        let data: Vec<u8> = String::from("Lorem ipsum").into_bytes();
+        let result = calc_entropy(&data);
+        assert_eq!(format!("{:.5}", result), "3.27761");
+    }
 }

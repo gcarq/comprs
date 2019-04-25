@@ -16,7 +16,7 @@ Currently implemented algorithms:
 
 ```
  comprs 0.1.0
-Experimental sandbox for compression algorithms in Rust
+Experimental playground for compression algorithms in Rust
 
 USAGE:
     comprs [FLAGS] [OPTIONS] <mode> <file>

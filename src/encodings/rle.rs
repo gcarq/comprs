@@ -1,9 +1,8 @@
 use std::io::{Cursor, Read, Result, Seek, Write};
-use varuint::{Deserializable, Serializable, Varuint};
+
+use varuint::{Deserializable, Serializable, Varint};
 
 pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
-    println!(" -> RLE");
-
     let len = data.len();
     debug!("DEBUG:RLE: before: {}", len);
     let mut writer = Cursor::new(Vec::with_capacity(data.len()));
@@ -27,8 +26,6 @@ pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
 }
 
 pub fn reduce(data: &[u8]) -> Vec<u8> {
-    println!(" -> RLE");
-
     let mut decoded: Vec<u8> = Vec::with_capacity(data.len());
 
     let mut reader = Cursor::new(data);
@@ -42,13 +39,13 @@ pub fn reduce(data: &[u8]) -> Vec<u8> {
 }
 
 struct RLEPair {
-    pub count: Varuint,
+    pub count: Varint<u32>,
     pub symbol: u8,
 }
 
 impl RLEPair {
     pub fn new(count: usize, symbol: u8) -> Self {
-        RLEPair {count: Varuint(count as u128), symbol}
+        RLEPair {count: Varint(count as u32), symbol}
     }
 
     pub fn increment(&mut self) {
@@ -61,7 +58,7 @@ impl RLEPair {
     }
 
     pub fn deserialize<R: Read+Seek>(reader: &mut R) -> Result<Self> {
-        let count = Varuint::deserialize(reader)?;
+        let count = Varint::deserialize(reader)?;
 
         let mut buf = [0u8; 1];
         reader.read_exact(&mut buf)?;

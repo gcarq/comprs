@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+
 use super::super::arithmetic_coder::{FrequencyTable, SimpleFrequencyTable, Symbol};
 
 pub struct Context {

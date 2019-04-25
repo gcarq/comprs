@@ -1,8 +1,9 @@
-use bitbit::{BitReader, MSB};
 use std::io::{Read, Result};
+
+use bitbit::{BitReader, MSB};
+
 use super::{FrequencyTable, Symbol};
 use super::base::ArithmeticCoderBase;
-
 
 pub struct ArithmeticDecoder<R: Read> {
     reader: BitReader<R, MSB>,

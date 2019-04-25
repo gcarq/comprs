@@ -1,10 +1,13 @@
-use bitbit::{BitReader, BitWriter};
-use self::context::Context;
-use self::model::PPMModel;
 use std::io::{Read, Result, Write};
+
+use bitbit::{BitReader, BitWriter};
+
 use super::arithmetic_coder::{FrequencyTable, Symbol};
 use super::arithmetic_coder::decoder::ArithmeticDecoder;
 use super::arithmetic_coder::encoder::ArithmeticEncoder;
+
+use self::context::Context;
+use self::model::PPMModel;
 
 pub mod context;
 pub mod model;
@@ -19,8 +22,6 @@ const NUM_BITS: usize = 32;
 
 /// Compress content provided by reader and write compressed data to writer.
 pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
-    println!(" -> PPM");
-
     let mut encoder = ArithmeticEncoder::new(
         BitWriter::new(Vec::with_capacity(data.len() / 4)),
         NUM_BITS);
@@ -45,8 +46,6 @@ pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
 
 /// Decompress content provided by reader and write restored data to writer.
 pub fn reduce(data: &[u8]) -> Result<Vec<u8>> {
-    println!(" -> PPM");
-
     let mut decoder = ArithmeticDecoder::new(BitReader::new(data), NUM_BITS)?;
     let mut model = PPMModel::new(ORDER as u8, SYMBOL_LIMIT, ESCAPE_SYMBOL);
 
@@ -136,6 +135,8 @@ fn decode_symbol<'a, R: Read>(model: &'a mut PPMModel, history: &[Symbol], decod
 #[cfg(test)]
 mod tests {
     use std::io::Result;
+    use test::Bencher;
+
     use super::{apply, reduce};
 
     #[test]
@@ -155,5 +156,22 @@ mod tests {
 
         assert_eq!(original, restored);
         Ok(())
+    }
+
+    #[bench]
+    fn bench_compression(b: &mut Bencher) {
+        let original: Vec<u8> = String::from("\
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry.\
+            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\
+            when an unknown printer took a galley of type and scrambled it to make a type \
+            specimen book. It has survived not only five centuries, but also the leap into \
+            electronic typesetting, remaining essentially unchanged. It was popularised in \
+            the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, \
+            and more recently with desktop publishing software like Aldus PageMaker including \
+            versions of Lorem Ipsum.").into_bytes();
+        b.iter(|| {
+            let intermediate = apply(&original).unwrap();
+            reduce(&intermediate).unwrap();
+        });
     }
 }

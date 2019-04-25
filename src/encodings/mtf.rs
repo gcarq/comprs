@@ -1,17 +1,14 @@
 
 
 pub fn apply(data: &[u8]) -> Vec<u8> {
-    println!(" -> MTF");
     // Create alphabet vector
     let mut alphabet: Vec<u8> = (0..=255).collect();
 
     // Iterates over data and encodes each byte with the current alphabet
-    data.into_iter().map(|b|encode(*b, &mut alphabet)).collect()
+    data.iter().map(|b|encode(*b, &mut alphabet)).collect()
 }
 
 pub fn reduce(data: &[u8]) -> Vec<u8> {
-    println!(" -> MTF");
-
     // Create alphabet vector
     let mut alphabet: Vec<u8> = (0..=255).collect();
 

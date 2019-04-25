@@ -1,6 +1,6 @@
 use std::io::Result;
-use super::{FrequencyTable, Symbol};
 
+use super::{FrequencyTable, Symbol};
 
 pub trait ArithmeticCoderBase {
 
