@@ -13,9 +13,9 @@ pub mod context;
 pub mod model;
 
 // TODO: create struct to hold all possible encoding parameters
-const EOF: Symbol = 256;
 const ORDER: u8 = 2;
-const SYMBOL_LIMIT: u16 = 257;
+const EOF: Symbol = 256;
+const SYMBOL_LIMIT: Symbol = 257;
 const ESCAPE_SYMBOL: Symbol = 256;
 const NUM_BITS: usize = 32;
 
@@ -29,7 +29,7 @@ pub fn apply(data: &[u8]) -> Result<Vec<u8>> {
     let mut history: Vec<Symbol> = Vec::with_capacity(model.order as usize);
 
     for byte in data {
-        let symbol = u16::from(*byte);
+        let symbol = Symbol::from(*byte);
         encode_symbol(&mut model, &history, symbol, &mut encoder)?;
         model.increment_contexts(&history, symbol);
 
@@ -49,7 +49,7 @@ pub fn reduce(data: &[u8]) -> Result<Vec<u8>> {
     let mut decoder = ArithmeticDecoder::new(BitReader::new(data), NUM_BITS)?;
     let mut model = PPMModel::new(ORDER as u8, SYMBOL_LIMIT, ESCAPE_SYMBOL);
 
-    let mut history: Vec<u16> = Vec::with_capacity(model.order as usize);
+    let mut history: Vec<Symbol> = Vec::with_capacity(model.order as usize);
     let mut buffer = Vec::with_capacity(data.len());
 
     loop {
@@ -70,6 +70,7 @@ pub fn reduce(data: &[u8]) -> Result<Vec<u8>> {
 
 
 /// Append current symbol to history or shift back by one
+#[inline]
 fn mutate_history(symbol: Symbol, order: u8, history: &mut Vec<Symbol>) {
     if history.len() >= order as usize {
         history.remove(0);

@@ -30,28 +30,32 @@ impl SimpleFrequencyTable {
 }
 
 impl FrequencyTable for SimpleFrequencyTable {
-
-    fn new(num_symbols: u16) -> Self {
+    #[inline]
+    fn new(num_symbols: Symbol) -> Self {
         SimpleFrequencyTable {
             frequencies: vec![0; num_symbols as usize],
             total: 0,
         }
     }
 
+    #[inline]
     fn get(&self, symbol: Symbol) -> usize {
         self.frequencies[symbol as usize]
     }
 
+    #[inline]
     fn get_low(&mut self, symbol: Symbol) -> usize {
         self.cumulative(symbol)
     }
 
+    #[inline]
     fn get_high(&mut self, symbol: Symbol) -> usize {
         self.cumulative(symbol + 1)
     }
 
-    fn get_symbol_limit(&self) -> u16 {
-        self.frequencies.len() as u16
+    #[inline]
+    fn get_symbol_limit(&self) -> Symbol {
+        self.frequencies.len() as Symbol
     }
 
     fn set(&mut self, symbol: Symbol, frequency: usize) {
@@ -65,6 +69,7 @@ impl FrequencyTable for SimpleFrequencyTable {
         self.frequencies[symbol as usize] += 1;
     }
 
+    #[inline]
     fn total(&self) -> usize { self.total }
 }
 
@@ -77,20 +82,24 @@ impl fmt::Debug for SimpleFrequencyTable {
 }
 
 pub struct FlatFrequencyTable {
-    num_symbols: u16
+    num_symbols: Symbol
 }
 
 impl FrequencyTable for FlatFrequencyTable {
-    fn new(num_symbols: u16) -> Self {
+    fn new(num_symbols: Symbol) -> Self {
         FlatFrequencyTable{ num_symbols }
     }
 
+    #[inline]
     fn get(&self, _symbol: Symbol) -> usize { 1 }
 
+    #[inline]
     fn get_low(&mut self, symbol: Symbol) -> usize { symbol as usize }
 
+    #[inline]
     fn get_high(&mut self, symbol: Symbol) -> usize { symbol as usize + 1 }
 
+    #[inline]
     fn get_symbol_limit(&self) -> Symbol { self.num_symbols }
 
     fn set(&mut self, _symbol: Symbol, _frequency: usize) {
@@ -101,5 +110,6 @@ impl FrequencyTable for FlatFrequencyTable {
         unimplemented!()
     }
 
+    #[inline]
     fn total(&self) -> usize { self.num_symbols as usize }
 }

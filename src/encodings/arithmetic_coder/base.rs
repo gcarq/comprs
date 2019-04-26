@@ -1,6 +1,8 @@
 use std::io::Result;
 
-use super::{FrequencyTable, Symbol};
+use encodings::arithmetic_coder::Symbol;
+
+use super::FrequencyTable;
 
 pub trait ArithmeticCoderBase {
 
@@ -21,11 +23,10 @@ pub trait ArithmeticCoderBase {
 
     fn update<T: FrequencyTable>(&mut self, freqtable: &mut T, symbol: Symbol) -> Result<()> {
         let (low, high) = (self.low(), self.high());
-        debug_assert!(low < high);
+        debug_assert!(low < high, "low or high out of range");
 
-        //FIXME: asserts fail somehow
-        //debug_assert!(low & state_mask != low);
-        //debug_assert!(high & state_mask != high);
+        debug_assert!(low & self.state_mask() == low, "low out of range");
+        debug_assert!(high & self.state_mask() == high, "high out of range");
 
         let range = high - low + 1;
         debug_assert!(self.minimum_range() <= range);
@@ -34,8 +35,8 @@ pub trait ArithmeticCoderBase {
         let symlow = freqtable.get_low(symbol);
         let symhigh = freqtable.get_high(symbol);
         let total = freqtable.total();
-        debug_assert!(symlow != symhigh);
-        debug_assert!(total < self.maximum_total());
+        debug_assert!(symlow != symhigh, "symbol has zero frequency");
+        debug_assert!(total <= self.maximum_total(), "cannot code symbol because total is too large");
 
         let (mut low, mut high) =
             (low + symlow * range / total, low + symhigh * range / total - 1);

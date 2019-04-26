@@ -1,9 +1,12 @@
+use std::cmp;
 use std::io::{Read, Result};
 
 use bitbit::{BitReader, MSB};
 
-use super::{FrequencyTable, Symbol};
+use encodings::arithmetic_coder::Symbol;
+
 use super::base::ArithmeticCoderBase;
+use super::FrequencyTable;
 
 pub struct ArithmeticDecoder<R: Read> {
     reader: BitReader<R, MSB>,
@@ -26,14 +29,21 @@ pub struct ArithmeticDecoder<R: Read> {
 impl<R: Read> ArithmeticCoderBase for ArithmeticDecoder<R> {
     fn set_low(&mut self, value: usize) { self.low = value }
     fn set_high(&mut self, value: usize) { self.high = value }
-
+    #[inline]
     fn low(&self) -> usize { self.low }
+    #[inline]
     fn high(&self) -> usize { self.high }
+    #[inline]
     fn state_mask(&self) -> usize {self.state_mask }
+    #[inline]
     fn minimum_range(&self) -> usize { self.minimum_range }
+    #[inline]
     fn quarter_range(&self) -> usize { self.quarter_range }
+    #[inline]
     fn half_range(&self) -> usize { self.half_range }
+    #[inline]
     fn full_range(&self) -> usize { self.full_range }
+    #[inline]
     fn maximum_total(&self) -> usize { self.maximum_total }
 
     fn shift(&mut self) -> Result<()> {
@@ -60,7 +70,7 @@ impl<R: Read> ArithmeticDecoder<R> {
         let minimum_range = quarter_range + 2;  // At least 2
         // Maximum allowed total from a frequency table at all times during coding. This differs from Java
         // and C++ because Python's native bigint avoids constraining the size of intermediate computations.
-        let maximum_total = minimum_range;
+        let maximum_total = cmp::min(std::usize::MAX / full_range, minimum_range);
         // Bit mask of num_state_bits ones, which is 0111...111.
         let state_mask = full_range - 1;
 
@@ -87,7 +97,7 @@ impl<R: Read> ArithmeticDecoder<R> {
     pub fn read<T: FrequencyTable>(&mut self, freqtable: &mut T) -> Result<Symbol> {
         let total = freqtable.total();
 
-        debug_assert!(total <= self.maximum_total);
+        debug_assert!(total <= self.maximum_total, "cannot decode symbol because total is too large");
 
         let range = self.high - self.low + 1;
         let offset = self.code - self.low;
@@ -96,10 +106,10 @@ impl<R: Read> ArithmeticDecoder<R> {
         debug_assert!(value < total);
 
         // A kind of binary search. Find highest symbol such that freqs.get_low(symbol) <= value.
-        let mut start: u16 = 0;
-        let mut end: u16 = freqtable.get_symbol_limit();
+        let mut start = 0;
+        let mut end = freqtable.get_symbol_limit();
         while end - start > 1 {
-            let middle: u16 = (start + end) >> 1;
+            let middle = (start + end) >> 1;
             if freqtable.get_low(middle) > value {
                 end = middle;
             } else {
@@ -108,13 +118,13 @@ impl<R: Read> ArithmeticDecoder<R> {
         }
         debug_assert_eq!(start + 1, end);
 
-        let symbol: Symbol = start;
+        let symbol = start;
         debug_assert!(freqtable.get_low(symbol) * range / total <= offset);
         debug_assert!(offset < freqtable.get_high(symbol) * range / total);
         self.update(freqtable, symbol)?;
 
-        debug_assert!(self.low <= self.code);
-        debug_assert!(self.code <= self.high);
+        debug_assert!(self.low <= self.code, "code out of range");
+        debug_assert!(self.code <= self.high, "code out of range");
 
         Ok(symbol)
     }

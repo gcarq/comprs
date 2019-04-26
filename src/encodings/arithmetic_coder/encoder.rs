@@ -1,9 +1,12 @@
+use std::cmp;
 use std::io::{Result, Write};
 
 use bitbit::BitWriter;
 
-use super::{FrequencyTable, Symbol};
+use encodings::arithmetic_coder::Symbol;
+
 use super::base::ArithmeticCoderBase;
+use super::FrequencyTable;
 
 pub struct ArithmeticEncoder<W: Write> {
     writer: BitWriter<W>,
@@ -18,7 +21,6 @@ pub struct ArithmeticEncoder<W: Write> {
     quarter_range: usize,
     minimum_range: usize,
     maximum_total: usize,
-
 }
 
 
@@ -36,7 +38,7 @@ impl<W: Write> ArithmeticEncoder<W> {
         let minimum_range = quarter_range + 2;  // At least 2
         // Maximum allowed total from a frequency table at all times during coding. This differs from Java
         // and C++ because Python's native bigint avoids constraining the size of intermediate computations.
-        let maximum_total = minimum_range;
+        let maximum_total = cmp::min(std::usize::MAX / full_range, minimum_range);
         // Bit mask of num_state_bits ones, which is 0111...111.
         let state_mask = full_range - 1;
 
@@ -54,7 +56,7 @@ impl<W: Write> ArithmeticEncoder<W> {
             minimum_range, maximum_total,
         }
     }
-
+    #[inline]
     pub fn write<T: FrequencyTable>(&mut self, freqtable: &mut T, symbol: Symbol) -> Result<()> {
         self.update(freqtable, symbol)
     }
@@ -68,6 +70,7 @@ impl<W: Write> ArithmeticEncoder<W> {
     }
 
     /// Get reference of the inner writer
+    #[inline]
     pub fn inner_ref(&mut self) -> &W {
         self.writer.get_ref()
     }
@@ -76,14 +79,21 @@ impl<W: Write> ArithmeticEncoder<W> {
 impl<W: Write> ArithmeticCoderBase for ArithmeticEncoder<W> {
     fn set_low(&mut self, value: usize) { self.low = value }
     fn set_high(&mut self, value: usize) { self.high = value }
-
+    #[inline]
     fn low(&self) -> usize { self.low }
+    #[inline]
     fn high(&self) -> usize { self.high }
+    #[inline]
     fn state_mask(&self) -> usize {self.state_mask }
+    #[inline]
     fn minimum_range(&self) -> usize { self.minimum_range }
+    #[inline]
     fn quarter_range(&self) -> usize { self.quarter_range }
+    #[inline]
     fn half_range(&self) -> usize { self.half_range }
+    #[inline]
     fn full_range(&self) -> usize { self.full_range }
+    #[inline]
     fn maximum_total(&self) -> usize { self.maximum_total }
 
     fn shift(&mut self) -> Result<()> {
@@ -101,6 +111,7 @@ impl<W: Write> ArithmeticCoderBase for ArithmeticEncoder<W> {
         self.num_underflow = 0;
         Ok(())
     }
+
     fn underflow(&mut self) {
         self.num_underflow += 1;
     }

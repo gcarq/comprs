@@ -8,7 +8,8 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(num_symbols: u16) -> Self {
+    #[inline]
+    pub fn new(num_symbols: Symbol) -> Self {
         Context {
             frequencies: SimpleFrequencyTable::new(num_symbols),
             sub_ctxs: BTreeMap::new(),

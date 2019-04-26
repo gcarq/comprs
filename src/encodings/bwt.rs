@@ -38,18 +38,21 @@ struct BWTReconstructData {
 }
 
 impl Ord for BWTReconstructData {
+    #[inline]
     fn cmp(&self, other: &BWTReconstructData) -> Ordering {
         self.char.cmp(&other.char)
     }
 }
 
 impl PartialOrd for BWTReconstructData {
+    #[inline]
     fn partial_cmp(&self, other: &BWTReconstructData) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl PartialEq for BWTReconstructData {
+    #[inline]
     fn eq(&self, other: &BWTReconstructData) -> bool {
         self.char == other.char
     }
@@ -115,6 +118,7 @@ struct Permutation<'a> {
 }
 
 impl<'a> Permutation<'a> {
+    #[inline]
     pub fn new(data: &'a [u8], index: u32) -> Self {
         Permutation { data, index }
     }
@@ -133,6 +137,7 @@ impl<'a> Index<usize> for Permutation<'a> {
     6: NANAS..A
     7: ANANAS..
     */
+    #[inline]
     fn index(&self, idx: usize) -> &u8 {
         let len = self.data.len();
         &self.data[(len - self.index as usize + idx) % len]
@@ -171,6 +176,7 @@ impl<'a> Eq for Permutation<'a> { }
 #[cfg(test)]
 mod tests {
     use super::{apply, BWTChunk, reduce};
+    use test::Bencher;
 
     #[test]
     fn test_apply() {
@@ -213,5 +219,46 @@ mod tests {
         let input: Vec<u8>  = String::from("S..NNAAA").into_bytes();
         let chunk = BWTChunk {data: input, index: 1};
         assert_eq!(String::from(".ANANAS."), String::from_utf8(chunk.decode()).unwrap());
+    }
+
+    #[bench]
+    fn bench_bwt_encode(b: &mut Bencher) {
+        let data: Vec<u8> = String::from("\
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry.\
+            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\
+            when an unknown printer took a galley of type and scrambled it to make a type \
+            specimen book. It has survived not only five centuries, but also the leap into \
+            electronic typesetting, remaining essentially unchanged. It was popularised in \
+            the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, \
+            and more recently with desktop publishing software like Aldus PageMaker including \
+            versions of Lorem Ipsum.").into_bytes();
+        let mut input = Vec::new();
+        for _ in 0..10 {
+            input.extend_from_slice(&data);
+        }
+        b.iter(|| {
+            apply(&input);
+        });
+    }
+
+    #[bench]
+    fn bench_bwt_decode(b: &mut Bencher) {
+        let original: Vec<u8> = String::from("\
+            Lorem Ipsum is simply dummy text of the printing and typesetting industry.\
+            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\
+            when an unknown printer took a galley of type and scrambled it to make a type \
+            specimen book. It has survived not only five centuries, but also the leap into \
+            electronic typesetting, remaining essentially unchanged. It was popularised in \
+            the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, \
+            and more recently with desktop publishing software like Aldus PageMaker including \
+            versions of Lorem Ipsum.").into_bytes();
+        let mut data = Vec::new();
+        for _ in 0..10 {
+            data.extend_from_slice(&original);
+        }
+        let input = apply(&original);
+        b.iter(|| {
+            reduce(&input);
+        });
     }
 }

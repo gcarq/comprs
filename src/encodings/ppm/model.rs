@@ -5,12 +5,12 @@ pub struct PPMModel {
     pub context: Context,
     pub order: u8,
     pub order_minus1_freqs: FlatFrequencyTable,
-    symbol_limit: u16,
+    symbol_limit: Symbol,
     escape_symbol: Symbol,
 }
 
 impl PPMModel {
-    pub fn new(order: u8, symbol_limit: u16, escape_symbol: Symbol) -> Self {
+    pub fn new(order: u8, symbol_limit: Symbol, escape_symbol: Symbol) -> Self {
         debug_assert!(escape_symbol < symbol_limit);
 
         let mut context = Context::new(symbol_limit);
@@ -33,7 +33,7 @@ impl PPMModel {
     }
 }
 
-fn populate_contexts(ctx: &mut Context, history: &[Symbol], symbol: Symbol, escape_symbol: Symbol, symbol_limit: u16) {
+fn populate_contexts(ctx: &mut Context, history: &[Symbol], symbol: Symbol, escape_symbol: Symbol, symbol_limit: Symbol) {
     if history.is_empty() {
         ctx.frequencies.increment(symbol);
         return;

@@ -12,6 +12,7 @@ pub mod rle;
 pub mod startransform;
 pub mod arithmetic_coder;
 
+#[repr(u8)]
 #[derive(Serialize, Deserialize)]
 pub enum Transform {
     BWT,
