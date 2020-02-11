@@ -9,11 +9,8 @@ const MAX_LENGTH: usize = 22;
 const ENCODING: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXXYZ";
 const VALID: &str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXXYZ";
 const DELIMS: [char; 32] = [
-    ' ', '\t',
-    ',', ';', '.', ':', '?', '!',
-    '(', ')', '[', ']', '{', '}', '<', '>',
-    '/', '\\', '#', '`', '\'', '"', '|', '=', '-',
-    '&', '_', '‘', '’', '+', '~', '@',
+    ' ', '\t', ',', ';', '.', ':', '?', '!', '(', ')', '[', ']', '{', '}', '<', '>', '/', '\\',
+    '#', '`', '\'', '"', '|', '=', '-', '&', '_', '‘', '’', '+', '~', '@',
 ];
 
 struct StarTransformData {
@@ -46,7 +43,9 @@ pub fn apply(data: &[u8]) -> Vec<u8> {
         for word in line.split(&DELIMS[..]) {
             if is_word(word) {
                 // Populate word occurrences in sub dictionary
-                *dictionaries[word.len()].entry(String::from(word)).or_insert(0) += 1;
+                *dictionaries[word.len()]
+                    .entry(String::from(word))
+                    .or_insert(0) += 1;
             }
         }
     }
@@ -69,7 +68,8 @@ pub fn apply(data: &[u8]) -> Vec<u8> {
         let mut value_set = HashSet::new();
         for value in translation_table.values() {
             value_set.insert(value);
-        } true
+        }
+        true
     });
 
     // Translate content with table
@@ -79,7 +79,7 @@ pub fn apply(data: &[u8]) -> Vec<u8> {
     // Prepare serialization data
     let data = StarTransformData {
         translation_table,
-        content: Vec::from(final_content.as_bytes())
+        content: Vec::from(final_content.as_bytes()),
     };
 
     data.content
@@ -95,7 +95,7 @@ fn encode_dictionary(dict: Vec<(&String, &usize)>, len: usize) -> HashMap<String
     // translate first word with '*' * len
     let mut code = vec!['*'; len];
     if let Some(word) = words.next() {
-        translation_table.insert(word.clone(), code.iter().collect());
+        translation_table.insert(word, code.iter().collect());
     }
 
     // Iterate over each index in reverse to place single mutation
@@ -123,9 +123,14 @@ fn encode_dictionary(dict: Vec<(&String, &usize)>, len: usize) -> HashMap<String
     translation_table
 }
 
-fn populate_table<I: Iterator>(translation_table: &mut HashMap<String, String>, words: &mut I, code: &[char], index: usize)
-where
-    I: Iterator<Item = String>, {
+fn populate_table<I: Iterator>(
+    translation_table: &mut HashMap<String, String>,
+    words: &mut I,
+    code: &[char],
+    index: usize,
+) where
+    I: Iterator<Item = String>,
+{
     let mut code = code.to_owned();
     for character in ENCODING.chars() {
         code[index] = character;
@@ -146,10 +151,8 @@ fn translate_content(content: &str, translation_table: &HashMap<String, String>)
             if is_word(word) {
                 // Replace word in final line
                 println!("replacing: {}", String::from(word));
-                final_line = final_line.replace(
-                    word,
-                    &translation_table.get(&String::from(word)).unwrap()
-                );
+                final_line =
+                    final_line.replace(word, &translation_table.get(&String::from(word)).unwrap());
             }
         }
         final_lines.push(final_line);

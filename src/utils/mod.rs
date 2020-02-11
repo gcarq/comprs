@@ -9,7 +9,8 @@ pub fn calc_entropy(data: &[u8]) -> f64 {
     }
 
     let flen = data.len() as f64;
-    let entropy: f64 = occurences.values()
+    let entropy: f64 = occurences
+        .values()
         .map(|o| f64::from(*o) / flen)
         .map(|p| p * p.log2())
         .sum();
@@ -21,15 +22,17 @@ pub fn print_statistics(input_meta: &Metadata, compressed_meta: &Metadata) {
     let input_size = input_meta.len() as f64;
     let comp_size = compressed_meta.len() as f64;
     println!("Compressed Size: {}", comp_size);
-    println!("Compress Ratio: {:.1} ({:.2}%)",
-             input_size / comp_size,
-             (1.0 - comp_size / input_size) * 100.0);
+    println!(
+        "Compress Ratio: {:.1} ({:.2}%)",
+        input_size / comp_size,
+        (1.0 - comp_size / input_size) * 100.0
+    );
     println!("Bits per Byte: {:.4}", comp_size / input_size * 8.0);
 }
 
 #[cfg(test)]
 mod tests {
-    use utils::calc_entropy;
+    use crate::utils::calc_entropy;
 
     #[test]
     fn test_calc_entropy() {

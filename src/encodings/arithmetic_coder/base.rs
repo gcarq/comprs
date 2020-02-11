@@ -1,11 +1,10 @@
 use std::io::Result;
 
-use encodings::arithmetic_coder::Symbol;
+use crate::encodings::arithmetic_coder::Symbol;
 
 use super::FrequencyTable;
 
 pub trait ArithmeticCoderBase {
-
     fn set_low(&mut self, value: usize);
     fn set_high(&mut self, value: usize);
 
@@ -36,10 +35,15 @@ pub trait ArithmeticCoderBase {
         let symhigh = freqtable.get_high(symbol);
         let total = freqtable.total();
         debug_assert!(symlow != symhigh, "symbol has zero frequency");
-        debug_assert!(total <= self.maximum_total(), "cannot code symbol because total is too large");
+        debug_assert!(
+            total <= self.maximum_total(),
+            "cannot code symbol because total is too large"
+        );
 
-        let (mut low, mut high) =
-            (low + symlow * range / total, low + symhigh * range / total - 1);
+        let (mut low, mut high) = (
+            low + symlow * range / total,
+            low + symhigh * range / total - 1,
+        );
 
         // While low and high have the same top bit value, shift them out
         let half_range = self.half_range();

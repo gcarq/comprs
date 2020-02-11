@@ -1,5 +1,5 @@
-use super::context::Context;
 use super::super::arithmetic_coder::{FlatFrequencyTable, FrequencyTable, Symbol};
+use super::context::Context;
 
 pub struct PPMModel {
     pub context: Context,
@@ -17,7 +17,10 @@ impl PPMModel {
         context.frequencies.increment(escape_symbol);
         PPMModel {
             order_minus1_freqs: FlatFrequencyTable::new(symbol_limit),
-            order, symbol_limit, escape_symbol, context,
+            order,
+            symbol_limit,
+            escape_symbol,
+            context,
         }
     }
 
@@ -28,12 +31,24 @@ impl PPMModel {
         debug_assert!(symbol < self.symbol_limit);
 
         for order in 0..=hist_len {
-            populate_contexts(&mut self.context, &history[hist_len-order..hist_len], symbol, self.escape_symbol, self.symbol_limit);
+            populate_contexts(
+                &mut self.context,
+                &history[hist_len - order..hist_len],
+                symbol,
+                self.escape_symbol,
+                self.symbol_limit,
+            );
         }
     }
 }
 
-fn populate_contexts(ctx: &mut Context, history: &[Symbol], symbol: Symbol, escape_symbol: Symbol, symbol_limit: Symbol) {
+fn populate_contexts(
+    ctx: &mut Context,
+    history: &[Symbol],
+    symbol: Symbol,
+    escape_symbol: Symbol,
+    symbol_limit: Symbol,
+) {
     if history.is_empty() {
         ctx.frequencies.increment(symbol);
         return;
@@ -48,6 +63,9 @@ fn populate_contexts(ctx: &mut Context, history: &[Symbol], symbol: Symbol, esca
 
     populate_contexts(
         ctx.sub_ctxs.get_mut(&sym).unwrap(),
-        &history[1..], symbol, escape_symbol, symbol_limit
+        &history[1..],
+        symbol,
+        escape_symbol,
+        symbol_limit,
     );
 }

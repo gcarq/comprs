@@ -1,16 +1,14 @@
 use std::fmt;
 use std::io::{BufReader, Read, Result};
 
-use bincode;
+use crate::utils::calc_entropy;
 
-use utils::calc_entropy;
-
-pub mod ppm;
+pub mod arithmetic_coder;
 pub mod bwt;
 pub mod mtf;
+pub mod ppm;
 pub mod rle;
 pub mod startransform;
-pub mod arithmetic_coder;
 
 #[repr(u8)]
 #[derive(Serialize, Deserialize)]
@@ -41,7 +39,6 @@ pub struct TData {
     pub buffer: Vec<u8>,
 }
 
-
 impl TData {
     /// Applies given transform methods to reader input
     pub fn encode<R: Read>(reader: R) -> Result<TData> {
@@ -50,7 +47,10 @@ impl TData {
         BufReader::new(reader).read_to_end(&mut buffer)?;
 
         debug!("DEBUG: Size before preprocessing: {}", &buffer.len());
-        debug!("DEBUG: File entropy before preprocessing: {:.2}", calc_entropy(&buffer));
+        debug!(
+            "DEBUG: File entropy before preprocessing: {:.2}",
+            calc_entropy(&buffer)
+        );
 
         let transforms = vec![
             //Transform::ST, FIXME: currently broken
@@ -71,8 +71,11 @@ impl TData {
         }
 
         debug!("DEBUG: Size after preprocessing: {}", &buffer.len());
-        debug!("DEBUG: File entropy after preprocessing: {:.2}", calc_entropy(&buffer));
-        Ok(TData {transforms, buffer})
+        debug!(
+            "DEBUG: File entropy after preprocessing: {:.2}",
+            calc_entropy(&buffer)
+        );
+        Ok(TData { transforms, buffer })
     }
 
     /// Decodes self  and returns the content as bytes
@@ -94,12 +97,10 @@ impl TData {
 }
 
 pub fn encode_pipeline<R: Read>(reader: R) -> Result<Vec<u8>> {
-    Ok(bincode::serialize(&TData::encode(reader)?)
-        .expect("unable to serialize data"))
+    Ok(bincode::serialize(&TData::encode(reader)?).expect("unable to serialize data"))
 }
 
 pub fn decode_pipeline<R: Read>(reader: R) -> Result<Vec<u8>> {
-    let data = bincode::deserialize_from::<R, TData>(reader)
-        .expect("unable to deserialize data");
+    let data = bincode::deserialize_from::<R, TData>(reader).expect("unable to deserialize data");
     data.decode()
 }

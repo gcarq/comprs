@@ -45,7 +45,10 @@ struct RLEPair {
 
 impl RLEPair {
     pub fn new(count: usize, symbol: u8) -> Self {
-        RLEPair {count: Varint(count as u32), symbol}
+        RLEPair {
+            count: Varint(count as u32),
+            symbol,
+        }
     }
 
     pub fn increment(&mut self) {
@@ -53,18 +56,20 @@ impl RLEPair {
     }
 
     pub fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
-        self.count.serialize(writer).expect("unable to serialize varuint");
+        self.count
+            .serialize(writer)
+            .expect("unable to serialize varuint");
         writer.write_all(&[self.symbol])
     }
 
-    pub fn deserialize<R: Read+Seek>(reader: &mut R) -> Result<Self> {
+    pub fn deserialize<R: Read + Seek>(reader: &mut R) -> Result<Self> {
         let count = Varint::deserialize(reader)?;
 
         let mut buf = [0u8; 1];
         reader.read_exact(&mut buf)?;
         let symbol = buf[0];
 
-        Ok(RLEPair {count, symbol})
+        Ok(RLEPair { count, symbol })
     }
 }
 
@@ -74,7 +79,9 @@ mod tests {
 
     #[test]
     fn test_apply() {
-        let data = String::from("WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWBWWWWWWWWWWWWWW").into_bytes();
+        let data =
+            String::from("WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWBWWWWWWWWWWWWWW")
+                .into_bytes();
 
         let test_data = [12, 87, 1, 66, 12, 87, 3, 66, 24, 87, 1, 66, 14, 87];
         assert_eq!(apply(&data).unwrap(), test_data);
@@ -83,6 +90,10 @@ mod tests {
     #[test]
     fn test_reduce() {
         let data = [12, 87, 1, 66, 12, 87, 3, 66, 24, 87, 1, 66, 14, 87];
-        assert_eq!(reduce(&data), String::from("WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWBWWWWWWWWWWWWWW").into_bytes());
+        assert_eq!(
+            reduce(&data),
+            String::from("WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWBWWWWWWWWWWWWWW")
+                .into_bytes()
+        );
     }
 }

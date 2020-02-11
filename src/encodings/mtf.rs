@@ -1,11 +1,9 @@
-
-
 pub fn apply(data: &[u8]) -> Vec<u8> {
     // Create alphabet vector
     let mut alphabet: Vec<u8> = (0..=255).collect();
 
     // Iterates over data and encodes each byte with the current alphabet
-    data.iter().map(|b|encode(*b, &mut alphabet)).collect()
+    data.iter().map(|b| encode(*b, &mut alphabet)).collect()
 }
 
 pub fn reduce(data: &[u8]) -> Vec<u8> {
@@ -23,7 +21,8 @@ pub fn reduce(data: &[u8]) -> Vec<u8> {
 }
 
 fn encode(byte: u8, alphabet: &mut Vec<u8>) -> u8 {
-    let index = alphabet.iter()
+    let index = alphabet
+        .iter()
         .position(|&b| b == byte)
         .expect("byte not found in alphabet");
 

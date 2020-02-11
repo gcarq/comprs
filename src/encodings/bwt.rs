@@ -1,32 +1,32 @@
 use std::cmp::Ordering;
 use std::ops::Index;
 
-use bincode;
-use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
+};
 use rayon::prelude::ParallelSliceMut;
 
 const CHUNK_SIZE: u32 = 1024 * 1024;
 
-
 pub fn apply(data: &[u8]) -> Vec<u8> {
     // Create chunks and encode them
-    let chunks: Vec<BWTChunk> = data.chunks(CHUNK_SIZE as usize)
+    let chunks: Vec<BWTChunk> = data
+        .chunks(CHUNK_SIZE as usize)
         .map(BWTChunk::encode)
         .collect();
     debug!("DEBUG:BWT: split up into {} chunks", chunks.len());
 
     // Serialize encoded data to u8
-    bincode::serialize(&BWTData {chunks})
-        .expect("unable to serialize data")
+    bincode::serialize(&BWTData { chunks }).expect("unable to serialize data")
 }
 
 pub fn reduce(data: &[u8]) -> Vec<u8> {
     // Create chunks and encode them
-    let data: BWTData = bincode::deserialize(data)
-        .expect("unable to deserialize data");
+    let data: BWTData = bincode::deserialize(data).expect("unable to deserialize data");
     debug!("DEBUG:BWT: got {} chunks", data.chunks.len());
 
-    data.chunks.into_iter()
+    data.chunks
+        .into_iter()
         .map(BWTChunk::decode)
         .flatten()
         .collect()
@@ -58,7 +58,7 @@ impl PartialEq for BWTReconstructData {
     }
 }
 
-impl Eq for BWTReconstructData { }
+impl Eq for BWTReconstructData {}
 
 #[derive(Serialize, Deserialize)]
 struct BWTData {
@@ -78,25 +78,33 @@ impl BWTChunk {
         // Create permutations table
         let mut permutations: Vec<Permutation> = (0..len)
             .into_par_iter()
-            .map(|i| Permutation::new(data, i as u32)).collect();
+            .map(|i| Permutation::new(data, i as u32))
+            .collect();
 
         permutations.par_sort();
 
         // Create encoded data by using the last element in each row
-        let index: u32 = permutations.par_iter()
-            .position_any(|p| p.index == 0).unwrap() as u32;
-        let data: Vec<u8> = permutations.par_iter()
-            .map(|m| m[len-1]).collect();
+        let index: u32 = permutations
+            .par_iter()
+            .position_any(|p| p.index == 0)
+            .unwrap() as u32;
+        let data: Vec<u8> = permutations.par_iter().map(|m| m[len - 1]).collect();
 
-        BWTChunk {data, index}
+        BWTChunk { data, index }
     }
 
     fn decode(self) -> Vec<u8> {
         let len = self.data.len();
 
         // Save all characters with along with position
-        let mut table: Vec<BWTReconstructData> = self.data.par_iter().enumerate()
-            .map(|(i, c)| BWTReconstructData {position: i as u32, char: *c})
+        let mut table: Vec<BWTReconstructData> = self
+            .data
+            .par_iter()
+            .enumerate()
+            .map(|(i, c)| BWTReconstructData {
+                position: i as u32,
+                char: *c,
+            })
             .collect();
 
         table.par_sort();
@@ -150,7 +158,7 @@ impl<'a> Ord for Permutation<'a> {
             for i in 0..self.data.len() {
                 match self[i].cmp(&other[i]) {
                     Ordering::Equal => continue,
-                    o => return o
+                    o => return o,
                 }
             }
         }
@@ -170,22 +178,17 @@ impl<'a> PartialEq for Permutation<'a> {
     }
 }
 
-impl<'a> Eq for Permutation<'a> { }
-
+impl<'a> Eq for Permutation<'a> {}
 
 #[cfg(test)]
 mod tests {
-    use super::{apply, BWTChunk, reduce};
-    use test::Bencher;
+    use super::{apply, reduce, BWTChunk};
 
     #[test]
     fn test_apply() {
         let test_data = vec![
-            01, 00, 00, 00, 00, 00, 00, 00,
-            19, 00, 00, 00, 00, 00, 00, 00,
-            83, 83, 51, 46, 46, 49, 50, 46,
-            46, 78, 78, 78, 78, 65, 65, 65,
-            65, 65, 65, 02, 00, 00, 00
+            01, 00, 00, 00, 00, 00, 00, 00, 19, 00, 00, 00, 00, 00, 00, 00, 83, 83, 51, 46, 46, 49,
+            50, 46, 46, 78, 78, 78, 78, 65, 65, 65, 65, 65, 65, 02, 00, 00, 00,
         ];
 
         let data = String::from(".ANANAS..ANANAS.123").into_bytes();
@@ -195,11 +198,8 @@ mod tests {
     #[test]
     fn test_reduce() {
         let test_data = vec![
-            01, 00, 00, 00, 00, 00, 00, 00,
-            19, 00, 00, 00, 00, 00, 00, 00,
-            83, 83, 51, 46, 46, 49, 50, 46,
-            46, 78, 78, 78, 78, 65, 65, 65,
-            65, 65, 65, 02, 00, 00, 00
+            01, 00, 00, 00, 00, 00, 00, 00, 19, 00, 00, 00, 00, 00, 00, 00, 83, 83, 51, 46, 46, 49,
+            50, 46, 46, 78, 78, 78, 78, 65, 65, 65, 65, 65, 65, 02, 00, 00, 00,
         ];
 
         let result = reduce(&test_data);
@@ -208,57 +208,25 @@ mod tests {
 
     #[test]
     fn test_encode() {
-        let input: Vec<u8>  = String::from(".ANANAS.").into_bytes();
+        let input: Vec<u8> = String::from(".ANANAS.").into_bytes();
         let result = BWTChunk::encode(&input);
         assert_eq!(result.index, 1);
-        assert_eq!(String::from("S..NNAAA"), String::from_utf8(result.data).unwrap());
+        assert_eq!(
+            String::from("S..NNAAA"),
+            String::from_utf8(result.data).unwrap()
+        );
     }
 
     #[test]
     fn test_decode() {
-        let input: Vec<u8>  = String::from("S..NNAAA").into_bytes();
-        let chunk = BWTChunk {data: input, index: 1};
-        assert_eq!(String::from(".ANANAS."), String::from_utf8(chunk.decode()).unwrap());
-    }
-
-    #[bench]
-    fn bench_bwt_encode(b: &mut Bencher) {
-        let data: Vec<u8> = String::from("\
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry.\
-            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\
-            when an unknown printer took a galley of type and scrambled it to make a type \
-            specimen book. It has survived not only five centuries, but also the leap into \
-            electronic typesetting, remaining essentially unchanged. It was popularised in \
-            the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, \
-            and more recently with desktop publishing software like Aldus PageMaker including \
-            versions of Lorem Ipsum.").into_bytes();
-        let mut input = Vec::new();
-        for _ in 0..10 {
-            input.extend_from_slice(&data);
-        }
-        b.iter(|| {
-            apply(&input);
-        });
-    }
-
-    #[bench]
-    fn bench_bwt_decode(b: &mut Bencher) {
-        let original: Vec<u8> = String::from("\
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry.\
-            Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\
-            when an unknown printer took a galley of type and scrambled it to make a type \
-            specimen book. It has survived not only five centuries, but also the leap into \
-            electronic typesetting, remaining essentially unchanged. It was popularised in \
-            the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, \
-            and more recently with desktop publishing software like Aldus PageMaker including \
-            versions of Lorem Ipsum.").into_bytes();
-        let mut data = Vec::new();
-        for _ in 0..10 {
-            data.extend_from_slice(&original);
-        }
-        let input = apply(&original);
-        b.iter(|| {
-            reduce(&input);
-        });
+        let input: Vec<u8> = String::from("S..NNAAA").into_bytes();
+        let chunk = BWTChunk {
+            data: input,
+            index: 1,
+        };
+        assert_eq!(
+            String::from(".ANANAS."),
+            String::from_utf8(chunk.decode()).unwrap()
+        );
     }
 }
